@@ -7,7 +7,9 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
+use App\Mail\OrderConfirmation;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 
 class CartController extends Controller
@@ -72,6 +74,7 @@ class CartController extends Controller
             $amount = $amount + ($value["quantity"] * $value["price"]);
         }
         $order->amount = $amount;
+        $order->save();
         $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
 
         $successURL = route('order.success') . '?session_id={CHECKOUT_SESSION_ID}&order_id=' . $order->id;
@@ -109,6 +112,7 @@ class CartController extends Controller
             $order->status = 1;
             $order->stripe_id = $session->id;
             $order->save();
+            Mail::to($order->user->email)->send(new OrderConfirmation($order));
             session()->forget('cart');
             return redirect()->route("home")->with("success", 'Order placed successfully!');
         }
