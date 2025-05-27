@@ -22,8 +22,6 @@ class LoginController extends Controller
 
     public function authenticate(Request $request)
     {
-    
-      
         $request->validate(
             [
                 'email' => 'required|email',
@@ -32,14 +30,13 @@ class LoginController extends Controller
         );
 
             if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-                
-                return redirect()->route('home');
+                 return redirect()->route('home');
             } else {
 
                 return redirect()->route('account.login')
                     ->with('error', 'either email or password is incorrect');
             }
-    } 
+    }
     
     public function register()
     {
