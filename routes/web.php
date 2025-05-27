@@ -36,6 +36,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/cart', 'cart')->name('cart');
         Route::post('/cart-update', 'cartUpdate')->name('cart.update');
         Route::post('/order', 'order')->name('order.post');
+        Route::get('/order-success', 'orderSuccess')->name('order.success');
+
         Route::get('/order-index', 'orderShow')->name('order');
         Route::delete('/{order} ', 'orderDestroy')->name('order.destroy');
         Route::get('/export ', 'orderExport')->name('export');

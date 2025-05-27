@@ -72,26 +72,63 @@ class CartController extends Controller
             $amount = $amount + ($value["quantity"] * $value["price"]);
         }
         $order->amount = $amount;
-        $order->save();
+        $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
 
-        session()->forget('cart');
-        return redirect()->back()->with('success', 'Order created successfully!');
+        $successURL = route('order.success') . '?session_id={CHECKOUT_SESSION_ID}&order_id=' . $order->id;
+
+        $response = $stripe->checkout->sessions->create([
+            'success_url' => $successURL,
+            'customer_email' => Auth::user()->email,
+            'line_items' => [
+                [
+                    'price_data' => [
+                        "product_data" => [
+                            "name" => "Shping"
+                        ],
+                        "unit_amount" => 100 * $amount,
+                        "currency" => "USD"
+                    ],
+                    'quantity' => 1,
+                ],
+            ],
+            'mode' => 'payment',
+        ]);
+        return redirect($response['url']);
+        // session()->forget('cart');
+        // return redirect()->back()->with('success', 'Order created successfully!');
     }
 
+
+    public function orderSuccess(Request $request)
+    {
+        $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+        $session = $stripe->checkout->sessions->retrieve($request->session_id);
+
+        if ($session->status == "complete") {
+            $order = Order::find($request->order_id);
+            $order->status = 1;
+            $order->stripe_id = $session->id;
+            $order->save();
+            session()->forget('cart');
+            return redirect()->route("home")->with("success", 'Order placed successfully!');
+        }
+        $order = Order::find($request->order_id);
+        $order->status = 2;
+        $order->save();
+        dd("Failed.");
+    }
     public function orderShow(Request $request)
     {
 
-         $orders = Order::with(['orderDetails.product', 'user'])->get();
-          $totalAmount = $orders->sum('amount');
-    return view("order", compact('orders','totalAmount'));
+        $orders = Order::with(['orderDetails.product', 'user'])->get();
+        $totalAmount = $orders->sum('amount');
+        return view("order", compact('orders', 'totalAmount'));
     }
 
-    public function orderDestroy(Order $order){
-               
+    public function orderDestroy(Order $order)
+    {
+
         return redirect()->route(route: 'order')
-        ->with('success', 'Order deleted successfully.');
-
+            ->with('success', 'Order deleted successfully.');
     }
-
-    
 }

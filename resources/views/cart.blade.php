@@ -14,7 +14,7 @@
             </div>
             <div class="text-end">
                 <a class="btn btn-warning" href="{{ route('home') }}">Continue Shopping</a>
-                <button class="btn btn-success">Order</button>
+                <button class="btn btn-success">Checkout</button>
             </div>
         </form>
     </div>
